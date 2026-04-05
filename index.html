@@ -14,17 +14,28 @@
     <link rel="icon" type="image/png" href="icon.png">
 
     <style>
+        /* UUSI: Universaali box-sizing estää elementtejä kasvamasta yli rajojensa */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         :root {
             --anim-scale: 1;
-            /* UUDET: Dynaamiset kokomuuttujat */
             --item-size: 50px;
             --font-size: 40px;
             --animal-size: 50px;
             --goal-size: 50px;
         }
 
-        body {
+        /* UUSI: html ja body lukittu sivuttaissuunnassa (overflow-x: hidden) */
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
             margin: 0;
+            padding: 0;
+        }
+
+        body {
             padding: 20px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: background-color 1s ease-in-out; 
@@ -33,9 +44,8 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            box-sizing: border-box;
             position: relative;
-            overflow: auto; 
+            overflow-y: auto; /* Sallitaan vain pystysuuntainen vieritys */
         }
 
         #sky-container {
@@ -98,10 +108,12 @@
             color: #ff1493;
             font-weight: bold;
             cursor: pointer;
-            box-sizing: border-box;
             outline: none;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
             font-family: inherit;
+            /* Estää iOS Safaria zoomaamasta automaattisesti */
+            appearance: none; 
+            -webkit-appearance: none;
         }
 
         #settings-view button {
@@ -134,7 +146,7 @@
             text-align: center;
             z-index: 5;
             margin-top: 20px; 
-            padding-bottom: 80px; /* Turvamarginaali napille */
+            padding-bottom: 80px; 
         }
 
         #time-display {
@@ -157,7 +169,6 @@
             position: relative;
         }
 
-        /* UUDISTETTU: Koot määräytyvät nyt muuttujien kautta */
         .track-item {
             font-size: var(--font-size);
             width: var(--item-size);
@@ -170,14 +181,12 @@
             z-index: 5;
         }
 
-        /* UUDISTETTU */
         .goal-item { 
             font-size: var(--goal-size) !important; 
             width: var(--goal-size) !important;
             height: var(--goal-size) !important;
         }
 
-        /* UUDISTETTU */
         #animal-character {
             position: absolute;
             font-size: var(--animal-size);
@@ -336,7 +345,6 @@
         let lastPercentEaten = 0; 
         let wakeLock = null;
 
-        // Globaali muuttuja nykyiselle emojin koolle
         window.currentEmojiSize = 50;
 
         function generateSky() {
@@ -371,17 +379,15 @@
             }
         }
 
-        // UUSI FUNKTIO: Laskee sopivan koon kaikille emojeille, jotta ne mahtuvat ruudulle
         function adjustSizes(totalItems) {
-            let size = 50; // Maksimikoko
-            const minSize = 12; // Minimikoko
-            const gap = 5; // CSS gap -arvo
+            let size = 50; 
+            const minSize = 12; 
+            const gap = 5; 
             
-            // Lasketaan saatavilla oleva tila ruudulta
-            const containerW = Math.min(window.innerWidth - 40, 800); 
-            const containerH = window.innerHeight - 250; // Jätetään tilaa kelloon ja paluunappiin
+            // UUSI: Suurempi turvamarginaali (60px) varmistaa, että reunoilla on tilaa eikä mikään pursua yli
+            const containerW = Math.min(window.innerWidth - 60, 800); 
+            const containerH = window.innerHeight - 250; 
 
-            // Etsitään sopiva koko silmukalla
             while (size > minSize) {
                 let cols = Math.floor((containerW + gap) / (size + gap));
                 let rows = Math.floor((containerH + gap) / (size + gap));
@@ -393,7 +399,6 @@
             
             window.currentEmojiSize = size;
             
-            // Päivitetään CSS-muuttujat uusilla kooilla
             document.documentElement.style.setProperty('--item-size', size + 'px');
             document.documentElement.style.setProperty('--font-size', Math.max(size * 0.8, 10) + 'px'); 
             document.documentElement.style.setProperty('--animal-size', Math.max(size * 1.2, 14) + 'px');
@@ -414,7 +419,6 @@
             totalSeconds = minutes * 60;
             const totalFruitsCount = Math.ceil(totalSeconds / 10);
             
-            // UUSI: Säädetään koko ennen emojien piirtämistä (+1 tarkoittaa lopun palkintoa)
             adjustSizes(totalFruitsCount + 1);
 
             lastPercentEaten = 0;
@@ -475,7 +479,6 @@
             confettis.forEach(c => c.remove());
         }
 
-        // Päivitetty: Otetaan huomioon dynaaminen koko asettelussa
         function moveAnimalToElement(targetElement, xOffset = 0) {
             const animalEl = document.getElementById('animal-character');
             const rect = targetElement.getBoundingClientRect();
@@ -499,7 +502,6 @@
                 currentFruit.style.clipPath = `inset(0 ${percentEaten}% 0 0)`;
                 currentFruit.style.webkitClipPath = `inset(0 ${percentEaten}% 0 0)`; 
 
-                // UUSI: Puremiskohta skaalautuu koon mukaan (alkuperäinen oli 0.7 eli 70% koosta)
                 let size = window.currentEmojiSize || 50;
                 let biteOffset = (percentEaten / 100) * (size * 0.7); 
                 moveAnimalToElement(currentFruit, biteOffset);
@@ -615,12 +617,10 @@
             } catch(e) {}
         }
 
-        // UUSI: Jos ikkunan koko muuttuu (esim. puhelin käännetään), lasketaan koko uudelleen
         window.addEventListener('resize', () => {
             if (document.getElementById('timer-view').style.display === 'block') {
                 adjustSizes(fruitsArray.length + 1);
                 
-                // Päivitetään eläimen sijainti vastaamaan uutta kokoa
                 if (fruitsArray.length > 0) {
                     let currentFruit = fruitsArray[fruitsArray.length - 1];
                     let remainder = totalSeconds % 10;
