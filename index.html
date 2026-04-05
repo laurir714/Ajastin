@@ -16,6 +16,11 @@
     <style>
         :root {
             --anim-scale: 1;
+            /* UUDET: Dynaamiset kokomuuttujat */
+            --item-size: 50px;
+            --font-size: 40px;
+            --animal-size: 50px;
+            --goal-size: 50px;
         }
 
         body {
@@ -30,11 +35,11 @@
             min-height: 100vh;
             box-sizing: border-box;
             position: relative;
-            overflow: hidden; 
+            overflow: auto; 
         }
 
         #sky-container {
-            position: absolute;
+            position: fixed; 
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: -1; 
             pointer-events: none;
@@ -51,7 +56,6 @@
             to { left: 100vw; }
         }
 
-        /* UUDISTETTU: Lapsiystävällinen asetusnäkymä */
         #settings-view {
             background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
             padding: 40px 30px;
@@ -63,6 +67,7 @@
             text-align: center;
             z-index: 10;
             font-family: 'Comic Sans MS', 'Nunito', 'Segoe UI', sans-serif;
+            margin-bottom: 20px; 
         }
 
         #settings-view h2 {
@@ -79,13 +84,13 @@
             font-weight: bold;
             display: block;
             margin-bottom: 5px;
+            margin-top: 15px; 
         }
 
-        /* UUDISTETTU: Pyöreä ja söpö pudotusvalikko */
         select {
             width: 100%;
             padding: 15px 20px;
-            margin: 10px 0 25px 0;
+            margin: 5px 0 15px 0; 
             font-size: 22px;
             border-radius: 25px;
             border: 3px solid #ffb6c1;
@@ -99,7 +104,6 @@
             font-family: inherit;
         }
 
-        /* UUDISTETTU: Leikkisä ja pyöreä aloituspainike */
         #settings-view button {
             background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
             color: white;
@@ -115,7 +119,7 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
             font-family: inherit;
-            margin-top: 10px;
+            margin-top: 20px;
         }
 
         #settings-view button:hover {
@@ -129,14 +133,16 @@
             max-width: 800px;
             text-align: center;
             z-index: 5;
+            margin-top: 20px; 
+            padding-bottom: 80px; /* Turvamarginaali napille */
         }
 
         #time-display {
             font-size: 55px;
             font-weight: bold;
             color: #ffffff;
-            margin-bottom: 40px;
-            margin-top: 20px;
+            margin-bottom: 20px;
+            margin-top: 0;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5); 
         }
 
@@ -147,14 +153,15 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 5px;
-            margin-top: 20px;
+            margin-top: 10px;
             position: relative;
         }
 
+        /* UUDISTETTU: Koot määräytyvät nyt muuttujien kautta */
         .track-item {
-            font-size: 40px;
-            width: 50px;
-            height: 50px;
+            font-size: var(--font-size);
+            width: var(--item-size);
+            height: var(--item-size);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -163,11 +170,17 @@
             z-index: 5;
         }
 
-        .goal-item { font-size: 50px; }
+        /* UUDISTETTU */
+        .goal-item { 
+            font-size: var(--goal-size) !important; 
+            width: var(--goal-size) !important;
+            height: var(--goal-size) !important;
+        }
 
+        /* UUDISTETTU */
         #animal-character {
             position: absolute;
-            font-size: 50px;
+            font-size: var(--animal-size);
             display: none;
             z-index: 20; 
             transition: top 0.5s ease-in-out, left 0.5s ease-in-out; 
@@ -234,7 +247,7 @@
         .anim-wiggle { animation: heilunta 0.3s ease-in-out 5; }
 
         .confetti {
-            position: absolute;
+            position: fixed; 
             width: 15px; height: 15px;
             z-index: 100;
             animation: fall linear forwards;
@@ -251,9 +264,20 @@
 
     <div id="settings-view">
         <h2>Aseta ajastin</h2>
+        
         <label for="time-select">Kuinka pitkä aika?</label>
         <select id="time-select"></select>
-        <button onclick="startTimer()">Arvo kaikki ja aloita!</button>
+
+        <label for="animal-select">Kuka syö?</label>
+        <select id="animal-select"></select>
+
+        <label for="fruit-select">Mitä syödään?</label>
+        <select id="fruit-select"></select>
+
+        <label for="goal-select">Mikä on palkinto?</label>
+        <select id="goal-select"></select>
+
+        <button onclick="startTimer()">Aloita ajastin!</button>
     </div>
 
     <div id="timer-view">
@@ -266,6 +290,13 @@
     <div id="animal-character"></div>
 
     <script>
+        const animalsList = ['🦄', '🦖', '🐶', '🐼', '🐰'];
+        const fruitsList = ['🍒', '🍉', '🏎️', '🌈'];
+        const goalsList = ['🍭', '🍩', '🥐', '📚'];
+
+        const colorsList = ['#9e8568', '#87CEEB', '#98FB98', '#FFB6C1', '#E6E6FA', '#FFFACD', '#FFDAB9', '#E0FFFF'];
+        const endAnimsList = ['anim-spin', 'anim-bounce', 'anim-pulse', 'anim-wiggle'];
+
         const timeSelect = document.getElementById('time-select');
         for (let i = 1; i <= 30; i++) {
             let option = document.createElement('option');
@@ -274,12 +305,29 @@
             timeSelect.appendChild(option);
         }
 
-        const animalsList = ['🦄', '🦖', '🐶', '🐼', '🐰'];
-        const fruitsList = ['🍒', '🍉', '🏎️', '🌈'];
-        const goalsList = ['🍭', '🍩', '🥐', '📚'];
+        const animalSelect = document.getElementById('animal-select');
+        animalsList.forEach(emoji => {
+            let option = document.createElement('option');
+            option.value = emoji;
+            option.text = emoji;
+            animalSelect.appendChild(option);
+        });
 
-        const colorsList = ['#9e8568', '#87CEEB', '#98FB98', '#FFB6C1', '#E6E6FA', '#FFFACD', '#FFDAB9', '#E0FFFF'];
-        const endAnimsList = ['anim-spin', 'anim-bounce', 'anim-pulse', 'anim-wiggle'];
+        const fruitSelect = document.getElementById('fruit-select');
+        fruitsList.forEach(emoji => {
+            let option = document.createElement('option');
+            option.value = emoji;
+            option.text = emoji;
+            fruitSelect.appendChild(option);
+        });
+
+        const goalSelect = document.getElementById('goal-select');
+        goalsList.forEach(emoji => {
+            let option = document.createElement('option');
+            option.value = emoji;
+            option.text = emoji;
+            goalSelect.appendChild(option);
+        });
 
         let totalSeconds;
         let timerInterval;
@@ -287,6 +335,9 @@
         let goalElement;
         let lastPercentEaten = 0; 
         let wakeLock = null;
+
+        // Globaali muuttuja nykyiselle emojin koolle
+        window.currentEmojiSize = 50;
 
         function generateSky() {
             const container = document.getElementById('sky-container');
@@ -320,6 +371,35 @@
             }
         }
 
+        // UUSI FUNKTIO: Laskee sopivan koon kaikille emojeille, jotta ne mahtuvat ruudulle
+        function adjustSizes(totalItems) {
+            let size = 50; // Maksimikoko
+            const minSize = 12; // Minimikoko
+            const gap = 5; // CSS gap -arvo
+            
+            // Lasketaan saatavilla oleva tila ruudulta
+            const containerW = Math.min(window.innerWidth - 40, 800); 
+            const containerH = window.innerHeight - 250; // Jätetään tilaa kelloon ja paluunappiin
+
+            // Etsitään sopiva koko silmukalla
+            while (size > minSize) {
+                let cols = Math.floor((containerW + gap) / (size + gap));
+                let rows = Math.floor((containerH + gap) / (size + gap));
+                if (cols * rows >= totalItems) {
+                    break;
+                }
+                size--;
+            }
+            
+            window.currentEmojiSize = size;
+            
+            // Päivitetään CSS-muuttujat uusilla kooilla
+            document.documentElement.style.setProperty('--item-size', size + 'px');
+            document.documentElement.style.setProperty('--font-size', Math.max(size * 0.8, 10) + 'px'); 
+            document.documentElement.style.setProperty('--animal-size', Math.max(size * 1.2, 14) + 'px');
+            document.documentElement.style.setProperty('--goal-size', Math.max(size * 1.2, 14) + 'px');
+        }
+
         function startTimer() {
             const animalEl = document.getElementById('animal-character');
             const minutes = parseInt(document.getElementById('time-select').value);
@@ -327,13 +407,16 @@
             document.body.style.backgroundColor = colorsList[Math.floor(Math.random() * colorsList.length)];
             generateSky();
 
-            const animalEmoji = animalsList[Math.floor(Math.random() * animalsList.length)];
-            const fruitEmoji = fruitsList[Math.floor(Math.random() * fruitsList.length)];
-            const goalEmoji = goalsList[Math.floor(Math.random() * goalsList.length)];
+            const animalEmoji = document.getElementById('animal-select').value;
+            const fruitEmoji = document.getElementById('fruit-select').value;
+            const goalEmoji = document.getElementById('goal-select').value;
 
             totalSeconds = minutes * 60;
             const totalFruitsCount = Math.ceil(totalSeconds / 10);
             
+            // UUSI: Säädetään koko ennen emojien piirtämistä (+1 tarkoittaa lopun palkintoa)
+            adjustSizes(totalFruitsCount + 1);
+
             lastPercentEaten = 0;
             
             animalEl.className = ''; 
@@ -366,6 +449,8 @@
             initAudio();
             requestWakeLock();
 
+            window.scrollTo(0, 0);
+
             setTimeout(() => {
                 if (fruitsArray.length > 0) {
                     moveAnimalToElement(fruitsArray[fruitsArray.length - 1], 0);
@@ -390,11 +475,13 @@
             confettis.forEach(c => c.remove());
         }
 
+        // Päivitetty: Otetaan huomioon dynaaminen koko asettelussa
         function moveAnimalToElement(targetElement, xOffset = 0) {
             const animalEl = document.getElementById('animal-character');
             const rect = targetElement.getBoundingClientRect();
+            const size = window.currentEmojiSize || 50;
             animalEl.style.left = (rect.right + window.scrollX + 5 - xOffset) + 'px';
-            animalEl.style.top = (rect.top + window.scrollY - 5) + 'px';
+            animalEl.style.top = (rect.top + window.scrollY - (size * 0.1)) + 'px';
         }
 
         function tick() {
@@ -412,7 +499,9 @@
                 currentFruit.style.clipPath = `inset(0 ${percentEaten}% 0 0)`;
                 currentFruit.style.webkitClipPath = `inset(0 ${percentEaten}% 0 0)`; 
 
-                let biteOffset = (percentEaten / 100) * 35; 
+                // UUSI: Puremiskohta skaalautuu koon mukaan (alkuperäinen oli 0.7 eli 70% koosta)
+                let size = window.currentEmojiSize || 50;
+                let biteOffset = (percentEaten / 100) * (size * 0.7); 
                 moveAnimalToElement(currentFruit, biteOffset);
 
                 if (percentEaten !== lastPercentEaten && percentEaten !== 100) {
@@ -525,6 +614,25 @@
                 oscillator.stop(audioCtx.currentTime + 0.8);
             } catch(e) {}
         }
+
+        // UUSI: Jos ikkunan koko muuttuu (esim. puhelin käännetään), lasketaan koko uudelleen
+        window.addEventListener('resize', () => {
+            if (document.getElementById('timer-view').style.display === 'block') {
+                adjustSizes(fruitsArray.length + 1);
+                
+                // Päivitetään eläimen sijainti vastaamaan uutta kokoa
+                if (fruitsArray.length > 0) {
+                    let currentFruit = fruitsArray[fruitsArray.length - 1];
+                    let remainder = totalSeconds % 10;
+                    let percentEaten = (10 - remainder) * 10;
+                    if (remainder === 0) percentEaten = 100;
+                    let biteOffset = (percentEaten / 100) * (window.currentEmojiSize * 0.7); 
+                    moveAnimalToElement(currentFruit, biteOffset);
+                } else if (goalElement) {
+                    moveAnimalToElement(goalElement, -10);
+                }
+            }
+        });
     </script>
 </body>
 </html>
