@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rauhallinen Yllätysajastin</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#9e8568">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <link rel="icon" type="image/png" href="icon.png">
+
+    <style>
+        :root {
+            --anim-scale: 1;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 1s ease-in-out; 
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden; 
+        }
+
+        #sky-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; 
+            pointer-events: none;
+        }
+        .sky-item {
+            position: absolute;
+            font-size: 50px;
+            opacity: 0.6;
+            left: -100px; 
+            animation: drift linear infinite;
+        }
+        @keyframes drift {
+            from { left: -100px; }
+            to { left: 100vw; }
+        }
+
+        #settings-view {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 20px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 22px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        #timer-view {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            z-index: 5;
+        }
+
+        #time-display {
+            font-size: 55px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 40px;
+            margin-top: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5); 
+        }
+
+        #track-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .track-item {
+            font-size: 40px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+            position: relative;
+            z-index: 5;
+        }
+
+        .goal-item { font-size: 50px; }
+
+        #animal-character {
+            position: absolute;
+            font-size: 50px;
+            display: none;
+            z-index: 20; 
+            transition: top 0.5s ease-in-out, left 0.5s ease-in-out; 
+            transform: scaleX(-1); 
+        }
+
+        @keyframes pureminen {
+            0%, 100% { transform: translate(0px, 0px) scaleX(-1); }
+            50% { transform: translate(-10px, 0px) scaleX(-1); } 
+        }
+        .munching { animation: pureminen 0.5s infinite; }
+
+        @keyframes pyörähdys {
+            0% { transform: translate(5px, -10px) scaleX(-1) rotate(0deg); }
+            100% { transform: translate(5px, -10px) scaleX(-1) rotate(-1080deg); }
+        }
+        .anim-spin { animation: pyörähdys 1.5s ease-out; }
+
+        @keyframes pomppu {
+            0%, 100% { transform: translateY(0px) scaleX(-1); }
+            50% { transform: translateY(-30px) scaleX(-1); }
+        }
+        .anim-bounce { animation: pomppu 0.4s ease-out 4; }
+
+        @keyframes syke {
+            0%, 100% { transform: translate(5px, -10px) scaleX(-1) scale(1); }
+            50% { transform: translate(5px, -10px) scaleX(-1) scale(1.5); }
+        }
+        .anim-pulse { animation: syke 0.5s ease-in-out 3; }
+
+        @keyframes heilunta {
+            0%, 100% { transform: translate(5px, -10px) scaleX(-1) rotate(0deg); }
+            25% { transform: translate(5px, -10px) scaleX(-1) rotate(-25deg); }
+            75% { transform: translate(5px, -10px) scaleX(-1) rotate(25deg); }
+        }
+        .anim-wiggle { animation: heilunta 0.3s ease-in-out 5; }
+
+        .confetti {
+            position: absolute;
+            width: 15px; height: 15px;
+            z-index: 100;
+            animation: fall linear forwards;
+            border-radius: 50%; 
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sky-container"></div>
+
+    <div id="settings-view">
+        <h2>Aseta ajastin</h2>
+        <label for="time-select">Kuinka pitkä aika?</label>
+        <select id="time-select"></select>
+        <button onclick="startTimer()">Arvo kaikki ja aloita!</button>
+    </div>
+
+    <div id="timer-view">
+        <div id="time-display">00:00</div>
+        <div id="track-container"></div>
+    </div>
+
+    <div id="animal-character"></div>
+
+    <script>
+        const timeSelect = document.getElementById('time-select');
+        for (let i = 1; i <= 30; i++) {
+            let option = document.createElement('option');
+            option.value = i;
+            option.text = `${i} minuutti${i > 1 ? 'a' : ''}`;
+            timeSelect.appendChild(option);
+        }
+
+        // --- PÄIVITETYT EMOJI-LISTAT ---
+        
+        // 1. Eläimet (Seuraavat: yksisarvinen, dinosaurus, koira, panda, pupu)
+        const animalsList = ['🦄', '🦖', '🐶', '🐼', '🐰'];
+        
+        // 2. Ruoka, jota syödään (Seuraavat: kirsikka, vesimeloni, autokarkki, kirja, sateenkaari)
+        const fruitsList = ['🍒', '🍉', '🏎️', '📚', '🌈'];
+        
+        // 3. Palkinnot (Seuraavat: tikkari, donitsi, croisant)
+        const goalsList = ['🍭', '🍩', '🥐'];
+
+        const colorsList = ['#9e8568', '#87CEEB', '#98FB98', '#FFB6C1', '#E6E6FA', '#FFFACD', '#FFDAB9', '#E0FFFF'];
+        const endAnimsList = ['anim-spin', 'anim-bounce', 'anim-pulse', 'anim-wiggle'];
+
+        let totalSeconds;
+        let timerInterval;
+        let fruitsArray = [];
+        let goalElement;
+        let lastPercentEaten = 0; 
+        let wakeLock = null;
+
+        function generateSky() {
+            const container = document.getElementById('sky-container');
+            container.innerHTML = ''; 
+            for(let i = 0; i < 8; i++) {
+                let item = document.createElement('div');
+                item.className = 'sky-item';
+                item.innerText = '☁️';
+                item.style.top = Math.random() * 60 + '%';
+                item.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                item.style.animationDelay = '-' + (Math.random() * 20) + 's'; 
+                container.appendChild(item);
+            }
+        }
+
+        generateSky();
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.log("WakeLock ei tuettu esikatselussa");
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+        }
+
+        function startTimer() {
+            const animalEl = document.getElementById('animal-character');
+            const minutes = parseInt(document.getElementById('time-select').value);
+            
+            document.body.style.backgroundColor = colorsList[Math.floor(Math.random() * colorsList.length)];
+            generateSky();
+
+            const animalEmoji = animalsList[Math.floor(Math.random() * animalsList.length)];
+            const fruitEmoji = fruitsList[Math.floor(Math.random() * fruitsList.length)];
+            const goalEmoji = goalsList[Math.floor(Math.random() * goalsList.length)];
+
+            totalSeconds = minutes * 60;
+            const totalFruitsCount = Math.ceil(totalSeconds / 10);
+            
+            lastPercentEaten = 0;
+            
+            animalEl.className = ''; 
+            
+            document.getElementById('settings-view').style.display = 'none';
+            document.getElementById('timer-view').style.display = 'block';
+
+            animalEl.innerText = animalEmoji;
+            animalEl.style.display = 'block';
+            animalEl.classList.add('munching'); 
+
+            const track = document.getElementById('track-container');
+            track.innerHTML = ''; 
+            fruitsArray = [];
+
+            goalElement = document.createElement('div');
+            goalElement.className = 'track-item goal-item';
+            goalElement.innerText = goalEmoji;
+            track.appendChild(goalElement);
+
+            for (let i = 0; i < totalFruitsCount; i++) {
+                let fruitDiv = document.createElement('div');
+                fruitDiv.className = 'track-item fruit-item';
+                fruitDiv.innerText = fruitEmoji;
+                track.appendChild(fruitDiv);
+                fruitsArray.push(fruitDiv); 
+            }
+
+            updateDisplay();
+            initAudio();
+            requestWakeLock();
+
+            setTimeout(() => {
+                if (fruitsArray.length > 0) {
+                    moveAnimalToElement(fruitsArray[fruitsArray.length - 1], 0);
+                }
+            }, 100);
+
+            timerInterval = setInterval(tick, 1000);
+        }
+
+        function moveAnimalToElement(targetElement, xOffset = 0) {
+            const animalEl = document.getElementById('animal-character');
+            const rect = targetElement.getBoundingClientRect();
+            animalEl.style.left = (rect.right + window.scrollX + 5 - xOffset) + 'px';
+            animalEl.style.top = (rect.top + window.scrollY - 5) + 'px';
+        }
+
+        function tick() {
+            const animalEl = document.getElementById('animal-character');
+            totalSeconds--;
+            updateDisplay();
+
+            if (fruitsArray.length > 0) {
+                let currentFruit = fruitsArray[fruitsArray.length - 1];
+                let remainder = totalSeconds % 10;
+                
+                let percentEaten = (10 - remainder) * 10;
+                if (remainder === 0) percentEaten = 100;
+                
+                currentFruit.style.clipPath = `inset(0 ${percentEaten}% 0 0)`;
+                currentFruit.style.webkitClipPath = `inset(0 ${percentEaten}% 0 0)`; 
+
+                let biteOffset = (percentEaten / 100) * 35; 
+                moveAnimalToElement(currentFruit, biteOffset);
+
+                if (percentEaten !== lastPercentEaten && percentEaten !== 100) {
+                    playMunchSound();
+                    lastPercentEaten = percentEaten;
+                }
+
+                if (remainder === 0) {
+                    currentFruit.style.opacity = '0';
+                    fruitsArray.pop(); 
+                    lastPercentEaten = 0; 
+                    
+                    if (fruitsArray.length > 0) {
+                        moveAnimalToElement(fruitsArray[fruitsArray.length - 1], 0);
+                    } else {
+                        animalEl.classList.remove('munching');
+                        moveAnimalToElement(goalElement, -10);
+                        
+                        const randomEndAnim = endAnimsList[Math.floor(Math.random() * endAnimsList.length)];
+                        animalEl.classList.add(randomEndAnim);
+                    }
+                }
+            }
+
+            if (totalSeconds <= 0) {
+                clearInterval(timerInterval);
+                playFunnyBeep();
+                spawnConfetti(); 
+                releaseWakeLock();
+            }
+        }
+
+        function updateDisplay() {
+            let minutes = Math.floor(totalSeconds / 60);
+            let seconds = totalSeconds % 60;
+            let formattedTime = 
+                (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                (seconds < 10 ? "0" + seconds : seconds);
+            document.getElementById('time-display').innerText = formattedTime;
+        }
+
+        function spawnConfetti() {
+            const colors = ['#FFD700', '#FF6347', '#00FFFF', '#FF69B4', '#32CD32', '#FFA500'];
+            for(let i = 0; i < 80; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-20px';
+                conf.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                conf.style.animationDelay = (Math.random() * 0.5) + 's';
+                document.body.appendChild(conf);
+            }
+        }
+
+        let audioCtx;
+
+        function initAudio() {
+            try {
+                if (!audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        audioCtx = new AudioContext();
+                    }
+                }
+            } catch (e) {
+                console.log("Äänet estetty selaimessa", e);
+            }
+        }
+
+        function playMunchSound() {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.15);
+                
+                gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        function playFunnyBeep() {
+            if (!audioCtx) initAudio();
+            
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+
+                oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
+                oscillator.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 0.4);
+                oscillator.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.8);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.8);
+            } catch(e) {}
+        }
+    </script>
+</body>
+</html>

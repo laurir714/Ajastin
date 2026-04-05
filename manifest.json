@@ -1,0 +1,16 @@
+{
+  "name": "Yllätysajastin",
+  "short_name": "Ajastin",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#9e8568",
+  "theme_color": "#9e8568",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}
