@@ -14,7 +14,6 @@
     <link rel="icon" type="image/png" href="icon.png">
 
     <style>
-        /* UUSI: Universaali box-sizing estää elementtejä kasvamasta yli rajojensa */
         *, *::before, *::after {
             box-sizing: border-box;
         }
@@ -27,7 +26,6 @@
             --goal-size: 50px;
         }
 
-        /* UUSI: html ja body lukittu sivuttaissuunnassa (overflow-x: hidden) */
         html, body {
             overflow-x: hidden;
             width: 100%;
@@ -45,7 +43,7 @@
             align-items: center;
             min-height: 100vh;
             position: relative;
-            overflow-y: auto; /* Sallitaan vain pystysuuntainen vieritys */
+            overflow-y: auto; 
         }
 
         #sky-container {
@@ -111,7 +109,6 @@
             outline: none;
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
             font-family: inherit;
-            /* Estää iOS Safaria zoomaamasta automaattisesti */
             appearance: none; 
             -webkit-appearance: none;
         }
@@ -384,7 +381,6 @@
             const minSize = 12; 
             const gap = 5; 
             
-            // UUSI: Suurempi turvamarginaali (60px) varmistaa, että reunoilla on tilaa eikä mikään pursua yli
             const containerW = Math.min(window.innerWidth - 60, 800); 
             const containerH = window.innerHeight - 250; 
 
@@ -605,15 +601,18 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
 
+                // UUSI: Pidennetty kesto (0.8s -> 2.4s) ja lisätty fade-out
                 gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 2.2);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2.4);
 
                 oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-                oscillator.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.2);
-                oscillator.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 0.4);
-                oscillator.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 0.8);
+                oscillator.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.6);
+                oscillator.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 1.2);
+                oscillator.frequency.linearRampToValueAtTime(1200, audioCtx.currentTime + 2.4);
                 
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.8);
+                oscillator.stop(audioCtx.currentTime + 2.4);
             } catch(e) {}
         }
 
